@@ -1,4 +1,4 @@
-ckage apparmor
+package apparmor
 
 import (
 	"github.com/Sirupsen/logrus"
