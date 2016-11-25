@@ -8,6 +8,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/kubernetes-incubator/cri-o/server"
+	"github.com/kubernetes-incubator/cri-o/server/apparmor"
 	"github.com/opencontainers/runc/libcontainer/selinux"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
@@ -186,6 +187,8 @@ func main() {
 		if !config.SELinux {
 			selinux.SetDisabled()
 		}
+		
+		apparmor.installDefaultAppArmorProfile()
 
 		if _, err := os.Stat(config.Runtime); os.IsNotExist(err) {
 			// path to runtime does not exist
