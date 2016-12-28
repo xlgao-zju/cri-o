@@ -149,8 +149,6 @@ func (r *Runtime) CreateContainer(c *Container) error {
 
 // StartContainer starts a container.
 func (r *Runtime) StartContainer(c *Container) error {
-	c.opLock.Lock()
-	defer c.opLock.Unlock()
 	if err := utils.ExecCmdWithStdStreams(os.Stdin, os.Stdout, os.Stderr, r.path, "start", c.name); err != nil {
 		return err
 	}
@@ -273,8 +271,6 @@ func (r *Runtime) ExecSync(c *Container, command []string, timeout int64) (resp 
 
 // StopContainer stops a container.
 func (r *Runtime) StopContainer(c *Container) error {
-	c.opLock.Lock()
-	defer c.opLock.Unlock()
 	if err := utils.ExecCmdWithStdStreams(os.Stdin, os.Stdout, os.Stderr, r.path, "kill", c.name); err != nil {
 		return err
 	}
@@ -301,15 +297,13 @@ func (r *Runtime) StopContainer(c *Container) error {
 
 // DeleteContainer deletes a container.
 func (r *Runtime) DeleteContainer(c *Container) error {
-	c.opLock.Lock()
-	defer c.opLock.Unlock()
 	return utils.ExecCmdWithStdStreams(os.Stdin, os.Stdout, os.Stderr, r.path, "delete", c.name)
 }
 
 // UpdateStatus refreshes the status of the container.
 func (r *Runtime) UpdateStatus(c *Container) error {
-	c.opLock.Lock()
-	defer c.opLock.Unlock()
+	c.stateLock.Lock()
+	defer c.stateLock.Unlock()
 	out, err := exec.Command(r.path, "state", c.name).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("error getting container state for %s: %s: %q", c.name, err, out)
@@ -343,8 +337,8 @@ func (r *Runtime) UpdateStatus(c *Container) error {
 
 // ContainerStatus returns the state of a container.
 func (r *Runtime) ContainerStatus(c *Container) *ContainerState {
-	c.opLock.Lock()
-	defer c.opLock.Unlock()
+	c.stateLock.Lock()
+	defer c.stateLock.Unlock()
 	return c.state
 }
 
@@ -362,7 +356,7 @@ type Container struct {
 	terminal    bool
 	state       *ContainerState
 	metadata    *pb.ContainerMetadata
-	opLock      sync.Mutex
+	stateLock   sync.Mutex
 }
 
 // ContainerState represents the status of a container.
